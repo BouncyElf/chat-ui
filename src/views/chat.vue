@@ -19,7 +19,10 @@
 							</el-col>
 						</el-row>
 						<el-row class="list-content">
-							<chat-list v-if="list_mode === 'chat'" :chats="chat_list"></chat-list>
+							<chat-list v-if="list_mode === 'chat'"
+								:chats="chat_list"
+								@open_chat="get_chat"
+								></chat-list>
 							<friend-list v-else :friends="friends"></friend-list>
 						</el-row>
 					</el-row>
@@ -49,14 +52,14 @@ export default {
 		return {
 			list_mode:'chat',
 			name:'左手的泥,右手的你',
-			bio:'的技术性南昌市看阿斯顿框架阿三达到oasas',
-			group_name:'group name here',
+			bio:'个性签名',
+			group_name:'风雨无阻',
 			input_message:'',
 			focused_messages: [
 				{
-					from:'a',
+					from:'风雨无阻',
 					time:'2018-09-20 16:12:24',
-					content:'123'
+					content:'在吗'
 				}
 			],
 			friends:[
@@ -78,6 +81,7 @@ export default {
 			chat_list: [
 				{
 					name:'第一个聊天名称',
+					gid:'123321123',
 					msg: {
 						content:'哈哈哈哈哈哈哈哈哈哈哈',
 						time:'2018-06-06 14:12:23'
@@ -85,6 +89,7 @@ export default {
 				},
 				{
 					name:'最后一个聊天名称',
+					gid:'123321123',
 					msg: {
 						content:'哈哈哈哈哈哈哈哈哈哈哈',
 						time:'2018-06-06 14:12:23'
@@ -96,6 +101,9 @@ export default {
 	methods: {
 		changeListMode(mode) {
 			this.list_mode = mode;
+		},
+		get_chat(group) {
+			console.log(group);
 		},
 		send_msg(msg) {
 			let that = this;

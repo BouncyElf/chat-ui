@@ -1,6 +1,6 @@
 <template>
 	<el-row class="chat-list-wrapper">
-		<el-button class="chat" v-for="c in chats">
+		<el-button class="chat" v-for="c in chats" @click="open_chat(c)">
 			<el-card class="chat-card" shadow="hover">
 				<el-row class="chat-title">
 					<el-col :span="15" class="chat-name">{{ c.name }}</el-col>
@@ -14,7 +14,12 @@
 
 <script>
 export default {
-	props: ['chats']
+	props: ['chats'],
+	methods: {
+		open_chat(group) {
+			this.$emit('open_chat', group);
+		}
+	}
 };
 </script>
 
