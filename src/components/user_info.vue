@@ -1,5 +1,5 @@
 <template>
-	<el-row>
+	<el-row class="user-info-wrapper">
 		<h1 class="name">{{ name }}</h1>
 		<p>&nbsp;&nbsp;&nbsp;&nbsp;{{ bio }}</p>
 	</el-row>
@@ -16,6 +16,10 @@ export default {
 </script>
 
 <style>
+.user-info-wrapper {
+	height:fit-content;
+}
+
 .name {
 	font-size:1.5rem;
 	margin:0;

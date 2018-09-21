@@ -10,7 +10,7 @@
 						<user-info :name="name" :bio="bio"></user-info>
 					</el-row>
 					<el-row class="list-view">
-						<el-row class="list-button-wrapper">
+						<el-row class="button-wrapper">
 							<el-col :span="12" class="list-button-wrapper no-left-border no-right-border">
 								<el-button plain type="primary" class="list-button" @click="changeListMode('chat')">聊天列表</el-button>
 							</el-col>
@@ -19,8 +19,8 @@
 							</el-col>
 						</el-row>
 						<el-row class="list-content">
-							<chat-list v-if="list_mode === 'chat'"></chat-list>
-							<friend-list v-else></friend-list>
+							<chat-list v-if="list_mode === 'chat'" :chats="chat_list"></chat-list>
+							<friend-list v-else :friends="friends"></friend-list>
 						</el-row>
 					</el-row>
 				</el-col>
@@ -32,10 +32,11 @@
 					<group-info :name="group_name"></group-info>
 				</el-header>
 				<el-main class="msg-list">
-					<msg-list :messages="focused_messages"></msg-list>
+					<msg-list :messages="focused_messages"
+						:myname="name"></msg-list>
 				</el-main>
 				<el-footer class="msg-sender">
-					<msg-sender :message="input_message"></msg-sender>
+					<msg-sender :message="input_message" @send="send_msg"></msg-sender>
 				</el-footer>
 			</el-container>
 		</el-main>
@@ -47,7 +48,7 @@ export default {
 	data() {
 		return {
 			list_mode:'chat',
-			name:'姓名',
+			name:'左手的泥,右手的你',
 			bio:'的技术性南昌市看阿斯顿框架阿三达到oasas',
 			group_name:'group name here',
 			input_message:'',
@@ -56,21 +57,38 @@ export default {
 					from:'a',
 					time:'2018-09-20 16:12:24',
 					content:'123'
+				}
+			],
+			friends:[
+				{
+					info:{
+						name:'第一个名称',
+						bio:'这里是我的个人简介阿三卡里的就;'
+					},
+					gid:'123321123'
 				},
 				{
-					from:'a',
-					time:'2018-09-20 16:12:27',
-					content:'113'
+					info:{
+						name:'最后一个名称',
+						bio:'这里是我的个人简介阿三卡里的就;'
+					},
+					gid:'123321123'
+				}
+			],
+			chat_list: [
+				{
+					name:'第一个聊天名称',
+					msg: {
+						content:'哈哈哈哈哈哈哈哈哈哈哈',
+						time:'2018-06-06 14:12:23'
+					}
 				},
 				{
-					from:'b',
-					time:'2018-09-20 16:13:24',
-					content:'223'
-				},
-				{
-					from:'b',
-					time:'2018-09-20 16:18:24',
-					content:'121'
+					name:'最后一个聊天名称',
+					msg: {
+						content:'哈哈哈哈哈哈哈哈哈哈哈',
+						time:'2018-06-06 14:12:23'
+					}
 				}
 			]
 		}
@@ -78,6 +96,16 @@ export default {
 	methods: {
 		changeListMode(mode) {
 			this.list_mode = mode;
+		},
+		send_msg(msg) {
+			let that = this;
+			console.log(msg);
+			that.focused_messages.push({
+				from:that.name,
+				time:'2018-09-20 16:18:24',
+				content:msg
+			});
+			return false;
 		},
 		init_info() {
 			let that = this;
@@ -172,6 +200,10 @@ export default {
 	height:inherit;
 }
 
+*::-webkit-scrollbar {
+	display:none;
+}
+
 .chat-main-view {
 	width:70%;
 	height:inherit;
@@ -183,11 +215,25 @@ export default {
 	height:-webkit-fill-available;
 }
 
+.my-info {
+	height:13%;
+}
+
+.list-view {
+	height:85%;
+}
+
+.button-wrapper {
+	height:5%;
+}
+
 .list-button-wrapper {
 	text-align:center;
 	border:1px solid #dcdfe6;
-	border-top:.5px solid #dcdfe6;
-	border-bottom:.5px solid #dcdfe6;
+}
+
+.list-content {
+	height:95%;
 }
 
 .list-button {

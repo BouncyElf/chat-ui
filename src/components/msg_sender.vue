@@ -5,18 +5,30 @@
 				class="msg-input"
 				type="textarea"
 				placeholder="请输入内容"
-				v-model="message">
+				v-model="input_msg">
 			</el-input>
 		</el-col>
 		<el-col :span="3" class="button-area">
-			<el-button plain class="send-button">发送</el-button>
+			<el-button plain @click="send" class="send-button">发送</el-button>
 		</el-col>
 	</el-row>
 </template>
 
 <script>
 export default {
-	props:['message']
+	props:['message'],
+	data() {
+		return {
+			input_msg: this.message
+		}
+	},
+	methods: {
+		send() {
+			let that = this;
+			that.$emit('send', that.input_msg);
+			that.input_msg = '';
+		}
+	}
 };
 </script>
 
