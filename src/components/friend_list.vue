@@ -1,17 +1,22 @@
 <template>
 	<el-row class="friend-list-wrapper">
-		<el-row class="friend" v-for="f in friends">
+		<el-button v-for="f in friends" class="friend" @click="chat_with(f)">
 			<el-card class="friend-card" shadow="hover">
 				<div class="friend-name">{{ f.info.name }}</div>
 				<div class="friend-bio">{{ f.info.bio }}</div>
 			</el-card>
-		</el-row>
+		</el-button>
 	</el-row>
 </template>
 
 <script>
 export default {
-	props: ['friends']
+	props: ['friends'],
+	methods: {
+		chat_with(friend) {
+			this.$emit('chat_with', friend);
+		}
+	}
 };
 </script>
 
@@ -22,11 +27,24 @@ export default {
 	overflow-y:scroll;
 }
 
+.friend-list-wrapper .el-button+.el-button {
+	margin-left:auto;
+}
+
 .friend {
 	width:80%;
 	margin:.5rem auto;
 	margin-bottom:0;
-	padding-bottom:.8rem;
+	padding:0;
+	display:block;
+	border:0;
+	border-radius:0;
+	text-align:justify;
+}
+
+.friend-card {
+	width:100%;
+	height:100%;
 }
 
 .friend-name {

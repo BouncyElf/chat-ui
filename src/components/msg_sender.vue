@@ -1,5 +1,5 @@
 <template>
-	<el-row class="msg_sender_wrapper">
+	<el-row class="msg-sender-wrapper">
 		<el-col :span="21" class="input-area">
 			<el-input
 				class="msg-input"
@@ -33,9 +33,13 @@ export default {
 </script>
 
 <style>
-.msg_sender_wrapper {
+.msg-sender-wrapper {
 	width:100%;
 	height:-webkit-fill-available;
+}
+
+.msg-sender-wrapper * {
+	background-color:transparent;
 }
 
 .input-area, .button-area {
@@ -47,6 +51,10 @@ export default {
 	resize:none;
 	border-radius:0;
 	border-right-width:.5px;
+}
+
+.msg-input textarea:hover {
+	background-color:#ffffff;
 }
 
 .send-button {

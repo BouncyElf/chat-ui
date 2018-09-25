@@ -3,7 +3,11 @@
 		<el-aside class="chat-list-view">
 			<el-container class="chat-list-inner-wrapper">
 				<el-col :span="5" class="function-icon">
-					<icon-list></icon-list>
+					<icon-list
+						@new_group="new_group"
+						@add_friend="add_friend"
+						@update_info="update_info"
+						></icon-list>
 				</el-col>
 				<el-col :span="19">
 					<el-row class="my-info">
@@ -21,9 +25,13 @@
 						<el-row class="list-content">
 							<chat-list v-if="list_mode === 'chat'"
 								:chats="chat_list"
+								:text_limit="limit.text_limit"
 								@open_chat="get_chat"
 								></chat-list>
-							<friend-list v-else :friends="friends"></friend-list>
+							<friend-list v-else
+								:friends="friends"
+								@chat_with="chat_with"
+								></friend-list>
 						</el-row>
 					</el-row>
 				</el-col>
@@ -50,6 +58,9 @@
 export default {
 	data() {
 		return {
+			limit:{
+				text_limit:10
+			},
 			list_mode:'chat',
 			name:'左手的泥,右手的你',
 			bio:'个性签名',
@@ -82,6 +93,7 @@ export default {
 				{
 					name:'第一个聊天名称',
 					gid:'123321123',
+					unread:true,
 					msg: {
 						content:'哈哈哈哈哈哈哈哈哈哈哈',
 						time:'2018-06-06 14:12:23'
@@ -90,6 +102,7 @@ export default {
 				{
 					name:'最后一个聊天名称',
 					gid:'123321123',
+					unread:false,
 					msg: {
 						content:'哈哈哈哈哈哈哈哈哈哈哈',
 						time:'2018-06-06 14:12:23'
@@ -99,6 +112,18 @@ export default {
 		}
 	},
 	methods: {
+		new_group() {
+			console.log('new_group');
+		},
+		add_friend() {
+			console.log('add_friend');
+		},
+		update_info() {
+			console.log('update_info');
+		},
+		chat_with(friend) {
+			console.log(friend);
+		},
 		changeListMode(mode) {
 			this.list_mode = mode;
 		},
@@ -196,6 +221,7 @@ export default {
 #chat-view {
 	width:100%;
 	min-height:inherit;
+	background-color:#f7f7f7;
 }
 
 .el-container, .el-main, .el-footer, .el-header {

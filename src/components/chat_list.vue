@@ -1,12 +1,15 @@
 <template>
 	<el-row class="chat-list-wrapper">
-		<el-button class="chat" v-for="c in chats" @click="open_chat(c)">
+		<el-button v-for="c in chats" class="chat" @click="open_chat(c)">
 			<el-card class="chat-card" shadow="hover">
 				<el-row class="chat-title">
 					<el-col :span="15" class="chat-name">{{ c.name }}</el-col>
-					<el-col :span="9" class="chat-time">{{ c.msg.time }}</el-col>
+					<el-badge v-if="c.unread" is-dot>
+						<el-col :span="9" class="chat-time">{{ c.msg.time }}</el-col>
+					</el-badge>
+					<el-col v-else :span="9" class="chat-time">{{ c.msg.time }}</el-col>
 				</el-row>
-				<div class="chat-last-msg">{{ c.msg.content }}</div>
+				<div class="chat-last-msg">{{ shorter(c.msg.content) }}</div>
 			</el-card>
 		</el-button>
 	</el-row>
@@ -14,8 +17,15 @@
 
 <script>
 export default {
-	props: ['chats'],
+	props: ['chats', 'text_limit'],
 	methods: {
+		shorter(content) {
+			let res = content;
+			if (res.length >= this.text_limit) {
+				res = res.substring(0, this.text_limit - 3) + '...';
+			}
+			return res;
+		},
 		open_chat(group) {
 			this.$emit('open_chat', group);
 		}

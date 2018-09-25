@@ -1,5 +1,5 @@
 <template>
-	<el-row>
+	<el-row class="msg-list-wrapper">
 		<el-row class="flex" v-for="msg in messages">
 			<el-row class="left" v-if="msg.from !== myname">
 				<p v-popover:popover>{{ msg.from }}&nbsp;({{ msg.time }}):&nbsp;<span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span></p>
@@ -18,14 +18,18 @@ export default {
 </script>
 
 <style>
+.msg-list-wrapper {
+	height:-webkit-fill-available;
+}
+
 .flex {
 	display:flex;
 	flex-direction:column;
 }
 .msg-content {
-	color:#474a56;
+	color:#000000;
 	border-radius:.3rem;
-	background-color:#ecf4f3;
+	background-color:#d5eeff;
 }
 .left {
 	align-self:flex-start;

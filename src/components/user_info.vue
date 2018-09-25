@@ -1,7 +1,7 @@
 <template>
 	<el-row class="user-info-wrapper">
 		<h1 class="name">{{ name }}</h1>
-		<p>&nbsp;&nbsp;&nbsp;&nbsp;{{ bio }}</p>
+		<p class="bio"><el-button>&nbsp;&nbsp;&nbsp;&nbsp;{{ bio }}</el-button></p>
 	</el-row>
 </template>
 
@@ -28,4 +28,15 @@ export default {
 	border-bottom:1px solid #dcdfe6;
 	font-weight:normal;
 }
+
+.bio .el-button {
+	width:100%;
+	height:100%;
+	padding:0;
+	margin:0;
+	border:0;
+	background-color:transparent;
+	text-align:justify;
+}
+
 </style>
