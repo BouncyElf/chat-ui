@@ -1,17 +1,14 @@
 <template>
 	<el-row class="user-info-wrapper">
-		<h1 class="name">{{ name }}</h1>
-		<p class="bio"><el-button>&nbsp;&nbsp;&nbsp;&nbsp;{{ bio }}</el-button></p>
+		<h1 class="name">{{ info.name }}</h1>
+		<h5 class="display_id">{{ 'display id: ' + info.display_id }}</h5>
+		<p class="bio">&nbsp;&nbsp;&nbsp;&nbsp;{{ info.bio }}</p>
 	</el-row>
 </template>
 
 <script>
 export default {
-	props:['name', 'bio'],
-	data() {
-		return {
-		}
-	}
+	props:['info']
 };
 </script>
 
@@ -24,19 +21,16 @@ export default {
 	font-size:1.5rem;
 	margin:0;
 	padding:1rem 0;
+	padding-bottom:0;
 	text-align:center;
-	border-bottom:1px solid #dcdfe6;
 	font-weight:normal;
 }
 
-.bio .el-button {
-	width:100%;
-	height:100%;
-	padding:0;
-	margin:0;
-	border:0;
-	background-color:transparent;
-	text-align:justify;
+.display_id {
+	text-align:center;
+	padding-top:.3rem;
+	padding-bottom:1rem;
+	border-bottom:1px solid #dcdfe6;
+	margin:.3rem auto;
 }
-
 </style>

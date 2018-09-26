@@ -3,7 +3,8 @@
 		<el-button v-for="f in friends" class="friend" @click="chat_with(f)">
 			<el-card class="friend-card" shadow="hover">
 				<div class="friend-name">{{ f.info.name }}</div>
-				<div class="friend-bio">{{ f.info.bio }}</div>
+				<div class="friend-display_id">{{ 'display id: ' + f.info.display_id }}</div>
+				<div class="friend-bio">{{ shorter(f.info.bio) }}</div>
 			</el-card>
 		</el-button>
 	</el-row>
@@ -13,6 +14,13 @@
 export default {
 	props: ['friends'],
 	methods: {
+		shorter(content) {
+			let res = content;
+			if (res.length >= this.text_limit) {
+				res = res.substring(0, this.text_limit - 3) + '...';
+			}
+			return res;
+		},
 		chat_with(friend) {
 			this.$emit('chat_with', friend);
 		}
@@ -50,6 +58,10 @@ export default {
 .friend-name {
 	font-size:1rem;
 	font-weight:300;
+}
+
+.friend-display_id {
+	padding:.4rem 0;
 }
 
 .friend-bio {

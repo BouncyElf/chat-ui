@@ -1,6 +1,6 @@
 <template>
 	<el-row class="icon-wrapper">
-		<el-row>
+		<el-row class="icon">
 			<el-button
 				circle
 				@click="new_group_dialog"
@@ -10,6 +10,7 @@
 				:visible.sync="new_group_visible">
 				<el-transfer
 					v-model="choosen"
+					:titles="['好友列表', '添加进群组']"
 					:data="all_friends">
 				</el-transfer>
 				<span slot="footer" class="dialog-footer">
@@ -18,7 +19,7 @@
 				</span>
 			</el-dialog>
 		</el-row>
-		<el-row>
+		<el-row class="icon">
 			<el-button
 				circle
 				@click="add_friend_dialog"
@@ -36,7 +37,7 @@
 				</span>
 			</el-dialog>
 		</el-row>
-		<el-row>
+		<el-row class="icon">
 			<el-button
 				circle
 				@click="update_info_dialog"
@@ -61,6 +62,7 @@
 
 <script>
 export default {
+	props:['friend_list'],
 	data() {
 		return {
 			new_group_visible:false,
@@ -74,24 +76,57 @@ export default {
 	},
 	methods: {
 		new_group() {
-			this.$emit('new_group');
+			if (this.choosen.length === 0) {
+				this.cancel();
+				return false;
+			}
+			this.$emit('new_group', this.choosen);
+			this.hidden_dialog();
 		},
 		new_group_dialog() {
-			this.new_group_visible = true;
+			let that = this;
+			that.all_friends = [];
+			that.choosen = [];
+			for (let i = 0; i < that.friend_list.length; i ++ ) {
+				that.all_friends.push({
+					key:that.friend_list[i].info.uid,
+					label:that.friend_list[i].info.name
+				});
+			}
+			that.new_group_visible = true;
 		},
 		add_friend() {
-			this.$emit('add_friend');
+			let display_id = this.friend_display_id.trim();
+			if (display_id.length === 0) {
+				this.cancel();
+				return false;
+			}
+			this.$emit('add_friend', display_id);
+			this.hidden_dialog();
 		},
 		add_friend_dialog() {
 			this.add_friend_visible = true;
+			this.friend_display_id = '';
 		},
 		update_info() {
-			this.$emit('update_info');
+			let new_bio = this.new_bio.trim();
+			if (new_bio.length === 0) {
+				this.cancel();
+				return false;
+			}
+			this.$emit('update_info', new_bio);
+			this.hidden_dialog();
 		},
 		update_info_dialog() {
 			this.update_info_visible = true;
+			this.new_bio = '';
 		},
 		cancel() {
+			this.new_group_visible = false;
+			this.add_friend_visible = false;
+			this.update_info_visible = false;
+		},
+		hidden_dialog() {
 			this.new_group_visible = false;
 			this.add_friend_visible = false;
 			this.update_info_visible = false;
@@ -104,11 +139,10 @@ export default {
 .icon-wrapper {
 	width:100%;
 	height:-webkit-fill-available;
-	text-align:center;
 	border-right:1px solid #dcdfe6;
 }
 
-.icon-wrapper .el-row {
+.icon-wrapper .icon {
 	width:100%;
 	text-align:center;
 	margin:0 auto;
@@ -117,5 +151,11 @@ export default {
 
 .el-dialog .el-input {
 	width:30%;
+}
+
+.el-dialog .el-transfer {
+	text-align:justify;
+	width:fit-content;
+	margin:0 auto;
 }
 </style>

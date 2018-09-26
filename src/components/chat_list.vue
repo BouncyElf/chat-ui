@@ -9,7 +9,7 @@
 					</el-badge>
 					<el-col v-else :span="9" class="chat-time">{{ c.msg.time }}</el-col>
 				</el-row>
-				<div class="chat-last-msg">{{ shorter(c.msg.content) }}</div>
+				<div class="chat-last-msg">{{ shorter(c.msg.from_name + ': ' + c.msg.content) }}</div>
 			</el-card>
 		</el-button>
 	</el-row>

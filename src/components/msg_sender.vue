@@ -5,6 +5,7 @@
 				class="msg-input"
 				type="textarea"
 				placeholder="请输入内容"
+				@keyup.enter.native="send"
 				v-model="input_msg">
 			</el-input>
 		</el-col>
@@ -24,9 +25,8 @@ export default {
 	},
 	methods: {
 		send() {
-			let that = this;
-			that.$emit('send', that.input_msg);
-			that.input_msg = '';
+			this.$emit('send', this.input_msg);
+			this.input_msg = '';
 		}
 	}
 };

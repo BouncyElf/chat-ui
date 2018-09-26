@@ -4,6 +4,7 @@
 			<el-container class="chat-list-inner-wrapper">
 				<el-col :span="5" class="function-icon">
 					<icon-list
+						:friend_list="friends"
 						@new_group="new_group"
 						@add_friend="add_friend"
 						@update_info="update_info"
@@ -11,22 +12,34 @@
 				</el-col>
 				<el-col :span="19">
 					<el-row class="my-info">
-						<user-info :name="name" :bio="bio"></user-info>
+						<user-info :info="my_info"></user-info>
 					</el-row>
 					<el-row class="list-view">
 						<el-row class="button-wrapper">
 							<el-col :span="12" class="list-button-wrapper no-left-border no-right-border">
-								<el-button plain type="primary" class="list-button" @click="changeListMode('chat')">聊天列表</el-button>
+								<el-button
+									plain
+									type="primary"
+									class="list-button"
+									@click="changeListMode('chat')"
+									ref="btn_chat_list"
+									>聊天列表</el-button>
 							</el-col>
 							<el-col :span="12" class="list-button-wrapper no-right-border">
-								<el-button plain type="primary" class="list-button" @click="changeListMode('friend')">好友列表</el-button>
+								<el-button
+									plain
+									type="primary"
+									class="list-button"
+									@click="changeListMode('friend')"
+									ref="btn_friend_list"
+									>好友列表</el-button>
 							</el-col>
 						</el-row>
 						<el-row class="list-content">
 							<chat-list v-if="list_mode === 'chat'"
 								:chats="chat_list"
 								:text_limit="limit.text_limit"
-								@open_chat="get_chat"
+								@open_chat="init_chat"
 								></chat-list>
 							<friend-list v-else
 								:friends="friends"
@@ -44,7 +57,7 @@
 				</el-header>
 				<el-main class="msg-list">
 					<msg-list :messages="focused_messages"
-						:myname="name"></msg-list>
+						:myname="my_info.name"></msg-list>
 				</el-main>
 				<el-footer class="msg-sender">
 					<msg-sender :message="input_message" @send="send_msg"></msg-sender>
@@ -62,13 +75,17 @@ export default {
 				text_limit:10
 			},
 			list_mode:'chat',
-			name:'左手的泥,右手的你',
-			bio:'个性签名',
+			my_info: {
+				uid:'123123123123123',
+				name:'雷布斯',
+				bio:'个性签名',
+				display_id:'123321123'
+			},
 			group_name:'风雨无阻',
 			input_message:'',
 			focused_messages: [
 				{
-					from:'风雨无阻',
+					from_name:'风雨无阻',
 					time:'2018-09-20 16:12:24',
 					content:'在吗'
 				}
@@ -76,35 +93,43 @@ export default {
 			friends:[
 				{
 					info:{
-						name:'第一个名称',
-						bio:'这里是我的个人简介阿三卡里的就;'
+						uid:'3213123321123',
+						name:'张益达',
+						display_id:'321123321',
+						bio:'我心里有一个秘密, 不打算告诉任何人'
 					},
-					gid:'123321123'
+					gid:'1233211232'
 				},
 				{
 					info:{
-						name:'最后一个名称',
-						bio:'这里是我的个人简介阿三卡里的就;'
+						uid:'123321123',
+						name:'小红',
+						display_id:'321123321',
+						bio:'真正的装逼，敢于直面本身没有厚度的脸皮。'
 					},
-					gid:'123321123'
+					gid:'1233211231'
 				}
 			],
 			chat_list: [
 				{
-					name:'第一个聊天名称',
+					name:'开心群聊',
 					gid:'123321123',
 					unread:true,
 					msg: {
-						content:'哈哈哈哈哈哈哈哈哈哈哈',
+						mid: '1233211232',
+						from_name:'张益达',
+						content:'zz',
 						time:'2018-06-06 14:12:23'
 					}
 				},
 				{
-					name:'最后一个聊天名称',
-					gid:'123321123',
+					name:'小红',
+					gid:'1233211231',
 					unread:false,
 					msg: {
-						content:'哈哈哈哈哈哈哈哈哈哈哈',
+						mid: '123321121',
+						from_name:'小红',
+						content:'一直勉强相处,总会累垮',
 						time:'2018-06-06 14:12:23'
 					}
 				}
@@ -112,29 +137,75 @@ export default {
 		}
 	},
 	methods: {
-		new_group() {
-			console.log('new_group');
+		update_unread(gid, mid) {
+			console.log(gid);
+			console.log(mid);
 		},
-		add_friend() {
-			console.log('add_friend');
+		new_group(tuids) {
+			let that = this;
+			if (tuids.indexOf(that.my_info.uid) === -1) {
+				tuids.push(that.my_info.uid);
+			}
+			console.log(tuids);
 		},
-		update_info() {
-			console.log('update_info');
+		add_friend(display_id) {
+			console.log(display_id);
+		},
+		update_info(new_bio) {
+			console.log(new_bio);
 		},
 		chat_with(friend) {
-			console.log(friend);
+			let that = this;
+			let isInList = false;
+			let this_group = {};
+			that.changeListMode('chat');
+			for (let i = 0; i < that.chat_list.length; i++) {
+				if (that.chat_list[i].gid !== undefined &&
+					that.chat_list[i].gid === friend.gid) {
+					this_group = that.chat_list[i];
+					that.chat_list.splice(i, 1);
+					that.chat_list.unshift(this_group);
+					isInList = true;
+				}
+			}
+
+			console.log(isInList);
+
+			if (!isInList) {
+				// TODO: axios to get last msg
+				this_group = {
+					name:friend.info.name,
+					gid:friend.gid,
+					unread:false,
+					msg: {
+						// NOTICE: get from backend
+						mid: '12309123',
+						from_name:friend.info.name,
+						content:'ok',
+						time:'2018-06-06 14:12:23'
+					}
+				};
+				that.chat_list.unshift(this_group);
+			}
+
+			that.init_chat(this_group);
 		},
 		changeListMode(mode) {
 			this.list_mode = mode;
 		},
-		get_chat(group) {
-			console.log(group);
+		init_chat(group) {
+			let that = this;
+			that.group_name = group.name;
+			that.focused_messages = [];
+			that.focused_messages.push(group.msg);
+			that.chat_list[that.chat_list.indexOf(group)].unread = false;
+			that.update_unread(group.gid, group.msg.mid);
 		},
 		send_msg(msg) {
 			let that = this;
 			console.log(msg);
 			that.focused_messages.push({
-				from:that.name,
+				from_name:that.my_info.name,
 				time:'2018-09-20 16:18:24',
 				content:msg
 			});
@@ -213,6 +284,22 @@ export default {
 		// this.init_info();
 		// this.init_chat_list();
 		// this.init_friend_list();
+		this.changeListMode('chat');
+	},
+	watch: {
+		list_mode: function() {
+			this.$refs.btn_chat_list.$el.style.backgroundColor = '';
+			this.$refs.btn_chat_list.$el.style.color = '';
+			this.$refs.btn_friend_list.$el.style.backgroundColor = '';
+			this.$refs.btn_friend_list.$el.style.color = '';
+			if (this.list_mode === 'chat') {
+				this.$refs.btn_chat_list.$el.style.backgroundColor = '#409EFF';
+				this.$refs.btn_chat_list.$el.style.color = '#ffffff';
+			} else {
+				this.$refs.btn_friend_list.$el.style.backgroundColor = '#409EFF';
+				this.$refs.btn_friend_list.$el.style.color = '#ffffff';
+			}
+		}
 	}
 };
 </script>
@@ -250,11 +337,11 @@ export default {
 }
 
 .my-info {
-	height:13%;
+	height:20%;
 }
 
 .list-view {
-	height:85%;
+	height:70%;
 }
 
 .button-wrapper {
