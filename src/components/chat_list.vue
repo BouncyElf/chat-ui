@@ -5,11 +5,11 @@
 				<el-row class="chat-title">
 					<el-col :span="15" class="chat-name">{{ c.name }}</el-col>
 					<el-badge v-if="c.unread" is-dot>
-						<el-col :span="9" class="chat-time">{{ c.msg.time }}</el-col>
+						<el-col :span="9" class="chat-time">{{ c.show_msg.time }}</el-col>
 					</el-badge>
-					<el-col v-else :span="9" class="chat-time">{{ c.msg.time }}</el-col>
+					<el-col v-else :span="9" class="chat-time">{{ c.show_msg.time }}</el-col>
 				</el-row>
-				<div class="chat-last-msg">{{ shorter(c.msg.from_name + ': ' + c.msg.content) }}</div>
+				<div class="chat-last-msg">{{ shorter(c.show_msg.from_name + ': ' + c.show_msg.content) }}</div>
 			</el-card>
 		</el-button>
 	</el-row>

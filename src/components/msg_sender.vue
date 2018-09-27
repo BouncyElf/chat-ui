@@ -17,10 +17,9 @@
 
 <script>
 export default {
-	props:['message'],
 	data() {
 		return {
-			input_msg: this.message
+			input_msg: ''
 		}
 	},
 	methods: {

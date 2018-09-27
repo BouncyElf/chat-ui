@@ -12,7 +12,7 @@
 
 <script>
 export default {
-	props: ['friends'],
+	props: ['friends', 'text_limit'],
 	methods: {
 		shorter(content) {
 			let res = content;

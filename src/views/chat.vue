@@ -43,6 +43,7 @@
 								></chat-list>
 							<friend-list v-else
 								:friends="friends"
+								:text_limit="limit.text_limit"
 								@chat_with="chat_with"
 								></friend-list>
 						</el-row>
@@ -53,14 +54,14 @@
 		<el-main class="chat-main-view">
 			<el-container class="chat-space">
 				<el-header class="group-info">
-					<group-info :name="group_name"></group-info>
+					<group-info :name="focused_group.name"></group-info>
 				</el-header>
 				<el-main class="msg-list">
-					<msg-list :messages="focused_messages"
+					<msg-list :messages="focused_group.msg"
 						:myname="my_info.name"></msg-list>
 				</el-main>
 				<el-footer class="msg-sender">
-					<msg-sender :message="input_message" @send="send_msg"></msg-sender>
+					<msg-sender @send="send_msg"></msg-sender>
 				</el-footer>
 			</el-container>
 		</el-main>
@@ -71,6 +72,9 @@
 export default {
 	data() {
 		return {
+			arr:[],
+			socket:null,
+			socket_url:'ws://localhost:1212/socket',
 			limit:{
 				text_limit:10
 			},
@@ -81,15 +85,11 @@ export default {
 				bio:'个性签名',
 				display_id:'123321123'
 			},
-			group_name:'风雨无阻',
-			input_message:'',
-			focused_messages: [
-				{
-					from_name:'风雨无阻',
-					time:'2018-09-20 16:12:24',
-					content:'在吗'
-				}
-			],
+			focused_group: {
+				gid:'',
+				name:'',
+				msg: this.arr
+			},
 			friends:[
 				{
 					info:{
@@ -115,23 +115,25 @@ export default {
 					name:'开心群聊',
 					gid:'123321123',
 					unread:true,
-					msg: {
+					show_msg: {
 						mid: '1233211232',
 						from_name:'张益达',
 						content:'zz',
 						time:'2018-06-06 14:12:23'
-					}
+					},
+					msg:[]
 				},
 				{
 					name:'小红',
 					gid:'1233211231',
 					unread:false,
-					msg: {
+					show_msg: {
 						mid: '123321121',
 						from_name:'小红',
 						content:'一直勉强相处,总会累垮',
 						time:'2018-06-06 14:12:23'
-					}
+					},
+					msg:[]
 				}
 			]
 		}
@@ -177,7 +179,7 @@ export default {
 					name:friend.info.name,
 					gid:friend.gid,
 					unread:false,
-					msg: {
+					show_msg: {
 						// NOTICE: get from backend
 						mid: '12309123',
 						from_name:friend.info.name,
@@ -194,22 +196,51 @@ export default {
 			this.list_mode = mode;
 		},
 		init_chat(group) {
+			console.log(group);
 			let that = this;
-			that.group_name = group.name;
-			that.focused_messages = [];
-			that.focused_messages.push(group.msg);
+			that.focused_group = group;
+			if (that.focused_group.msg === undefined || that.focused_group.msg === []) {
+				if (that.focused_group.show_msg !== undefined) {
+					that.arr = [];
+					that.arr.push(that.focused_group.show_msg);
+					that.focused_group.msg = that.arr;
+				}
+			}
+			console.log(that.focused_group);
 			that.chat_list[that.chat_list.indexOf(group)].unread = false;
 			that.update_unread(group.gid, group.msg.mid);
 		},
 		send_msg(msg) {
-			let that = this;
-			console.log(msg);
-			that.focused_messages.push({
-				from_name:that.my_info.name,
+			this.focused_group.msg.push({
+				from_name:this.my_info.name,
 				time:'2018-09-20 16:18:24',
 				content:msg
 			});
+			console.log(this.focused_group.msg);
 			return false;
+		},
+		init_socket() {
+			let that = this;
+			if (that.socket === null) {
+				that.socket = new WebSocket(that.socket_url);
+
+				that.socket.onopen = function(evt) {
+					console.log("Connection open ...");
+				};
+
+				that.socket.onmessage = function(evt) {
+					console.log("Received Message: ");
+					console.log(evt);
+				};
+
+				that.socket.onclose = function(evt) {
+					console.log("Connection closed.");
+				};
+
+				that.socket.onerror = function(evt) {
+					console.log(evt);
+				};
+			}
 		},
 		init_info() {
 			let that = this;
@@ -240,6 +271,8 @@ export default {
 				console.log(err.response);
 				// TODO: handle err
 			});
+			// TODO: get last msg
+			// TODO: get system notify message
 		},
 		init_friend_list() {
 			let that = this;
@@ -284,7 +317,9 @@ export default {
 		// this.init_info();
 		// this.init_chat_list();
 		// this.init_friend_list();
+		// this.init_socket();
 		this.changeListMode('chat');
+		console.log(this.socket);
 	},
 	watch: {
 		list_mode: function() {
