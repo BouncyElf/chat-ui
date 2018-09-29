@@ -101,6 +101,7 @@ export default {
 							message:'发生了一些意料之外的错误',
 							type:'error'
 						});
+						return false;
 					});
 				} else {
 					that.$message({

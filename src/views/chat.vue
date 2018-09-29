@@ -255,6 +255,7 @@ export default {
 			}).catch(err => {
 				console.log(err.response);
 				// TODO: handle err
+				return false;
 			});
 		},
 		init_chat_list() {
@@ -270,6 +271,7 @@ export default {
 			}).catch(err => {
 				console.log(err.response);
 				// TODO: handle err
+				return false;
 			});
 			// TODO: get last msg
 			// TODO: get system notify message
@@ -287,6 +289,7 @@ export default {
 			}).catch(err => {
 				console.log(err.response);
 				// TODO: handle err
+				return false;
 			});
 		},
 		login_required() {
@@ -301,6 +304,7 @@ export default {
 			}).catch(err => {
 				console.log(err.response);
 				that.goto('login');
+				return false;
 			});
 		},
 		goto(uri) {
