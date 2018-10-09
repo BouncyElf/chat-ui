@@ -27,7 +27,8 @@ Vue.component('msg-sender', MsgSender);
 Vue.prototype.$ajax = axios;
 Vue.prototype.$qs = Qs;
 
-var debugMode = 'debug';
+// var debugMode = 'debug';
+var debugMode = '';
 
 Vue.prototype.$debugMode = debugMode;
 

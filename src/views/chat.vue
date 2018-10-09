@@ -140,21 +140,117 @@ export default {
 	},
 	methods: {
 		update_unread(gid, mid) {
-			console.log(gid);
-			console.log(mid);
+			let that = this;
+			let unread_api = that.$url_prefix + '/api/unread/update';
+			that.$ahax.post(
+				unread_api,
+				that.$qs.stringify({
+					gid:gid,
+					last_mid:mid
+				})
+			).then(res => {
+				console.log(res);
+			}).catch(err => {
+				console.log(err.response);
+			});
 		},
 		new_group(tuids) {
 			let that = this;
 			if (tuids.indexOf(that.my_info.uid) === -1) {
 				tuids.push(that.my_info.uid);
 			}
+			let uids = '';
+			for (let i = 0; i < tuids.length; i++) {
+				uids += tuids[i];
+				if (i < tuids.length - 1) {
+					uids += ';';
+				}
+			}
+			let group_api = that.$url_prefix + '/api/group/new';
+			that.$ajax.post(
+				group_api,
+				that.$qs.stringify({
+					tuids:uids
+				})
+			).then(res => {
+				console.log(res);
+				that.$message({
+					message:'创建群聊成功',
+					type:'success'
+				});
+				// TODO: add new group to the top of chat list
+			}).catch(err => {
+				console.log(err.response);
+			});
 			console.log(tuids);
 		},
 		add_friend(display_id) {
 			console.log(display_id);
+			// TODO: ajax
 		},
 		update_info(new_bio) {
 			console.log(new_bio);
+			// TODO: ajax
+		},
+		chat_list_to_top(gid) {
+			let that = this;
+			for (let i = 0; i < that.chat_list.length; i++) {
+				let tgroup = that.chat_list[i];
+				if (tgroup.gid === gid) {
+					that.chat_list.splice(i, 1);
+					that.chat_list.unshift(tgroup);
+					return true;
+				}
+			}
+			return false;
+		},
+		handle_msg(msg) {
+			msg = JSON.parse(msg);
+			let that = this;
+			console.log(msg);
+			if (msg.type === 'plain') {
+				if (msg.to === that.focused_group.gid) {
+					that.focused_group.msg.push(msg);
+					that.chat_list_to_top(msg.to);
+				} else {
+					let inChatList = false;
+					for (let i = 0; i < that.chat_list.length; i++) {
+						let tgroup = that.chat_list[i];
+						if (tgroup.gid === msg.to) {
+							inChatList = true;
+							that.chat_list.splice(i, 1);
+							tgroup.msg.push(msg);
+							tgroup.show_msg = msg;
+							if (tgroup.unread === false) {
+								that.update_unread(tgroup.gid, msg.mid);
+							}
+							tgroup.unread = true;
+							that.chat_list.unshift(tgroup);
+							break;
+						}
+					}
+					if (!inChatList) {
+						for (let i = 0; i < that.friends.length; i++) {
+							let tf = that.friends[i];
+							if (tf.gid === msg.to) {
+								that.chat_list.unshift({
+									name:tf.info.name,
+									gid:tf.gid,
+									unread:true,
+									show_msg:msg,
+									msg:[msg]
+								});
+								that.update_unread(tgroup.gid, msg.mid);
+								break;
+							}
+						}
+					}
+				}
+			} else if (msg.type === 'system') {
+				// TODO: system notify msg handle
+			} else {
+				// TODO: other
+			}
 		},
 		chat_with(friend) {
 			let that = this;
@@ -174,7 +270,6 @@ export default {
 			console.log(isInList);
 
 			if (!isInList) {
-				// TODO: axios to get last msg
 				this_group = {
 					name:friend.info.name,
 					gid:friend.gid,
@@ -211,12 +306,18 @@ export default {
 			that.update_unread(group.gid, group.msg.mid);
 		},
 		send_msg(msg) {
-			this.focused_group.msg.push({
-				from_name:this.my_info.name,
+			let that = this;
+			that.socket.send(JSON.stringify({
+				to:that.focused_group.gid,
+				type:'plain',
+				content:msg
+			}));
+			that.focused_group.msg.push({
+				from_name:that.my_info.name,
 				time:'2018-09-20 16:18:24',
 				content:msg
 			});
-			console.log(this.focused_group.msg);
+			console.log(that.focused_group.msg);
 			return false;
 		},
 		init_socket() {
@@ -231,14 +332,27 @@ export default {
 				that.socket.onmessage = function(evt) {
 					console.log("Received Message: ");
 					console.log(evt);
+					that.handle_msg(evt.data);
+					that.$notify({
+						title:'通知',
+						message:'您收到一条新消息'
+					});
 				};
 
 				that.socket.onclose = function(evt) {
 					console.log("Connection closed.");
+					that.$message({
+						message:'您与服务器已断开连接',
+						type:'info'
+					});
 				};
 
 				that.socket.onerror = function(evt) {
 					console.log(evt);
+					that.$message({
+						message:'与服务器连接出错',
+						type:'error'
+					});
 				};
 			}
 		},
@@ -251,29 +365,62 @@ export default {
 				})
 			).then(res => {
 				console.log(res);
-				// TODO: ui update
+				that.my_info = res.data.data;
 			}).catch(err => {
 				console.log(err.response);
-				// TODO: handle err
 				return false;
 			});
 		},
 		init_chat_list() {
 			let that = this;
 			let list_api = that.$url_prefix + '/api/list/get';
+			let gids = '';
 			that.$ajax.post(
 				list_api,
 				that.$qs.stringify({
 				})
 			).then(res => {
 				console.log(res);
-				// TODO: ui update
+				if (res.data.data === '') {
+					res.data.data = [];
+				}
+				that.chat_list = res.data.data;
+				for (let i = 0; i < that.chat_list.length; i++) {
+					gids += that.chat_list[i].gid;
+					if (i < that.chat_list[i].length - 1) {
+						gids += ';';
+					}
+				}
 			}).catch(err => {
 				console.log(err.response);
 				// TODO: handle err
 				return false;
 			});
-			// TODO: get last msg
+
+			let show_msg_api = that.$url_prefix + '/api/message/list';
+			that.$ajax.post(
+				show_msg_api,
+				that.$qs.stringify({
+					gids:gids
+				})
+			).then(res => {
+				console.log(res);
+				if (res.data.data === '') {
+					res.data.data = {};
+				}
+				for (let i = 0; i < that.chat_list.length; i++) {
+					if (res.data.data[that.chat_list[i].gid] === undefined) {
+						continue;
+					}
+					that.chat_list[i].show_msg = res.data.data[that.chat_list[i].gid].show_msg;
+					that.chat_list[i].unread = res.data.data[that.chat_list[i].gid].unread;
+					that.chat_list[i].msg = [];
+				}
+			}).catch(err => {
+				console.log(err.response);
+				// TODO: handle err
+				return false;
+			});
 			// TODO: get system notify message
 		},
 		init_friend_list() {
@@ -285,7 +432,10 @@ export default {
 				})
 			).then(res => {
 				console.log(res);
-				// TODO: ui update
+				if (res.data.data === '') {
+					res.data.data = [];
+				}
+				that.friends = res.data.data;
 			}).catch(err => {
 				console.log(err.response);
 				// TODO: handle err
@@ -304,6 +454,10 @@ export default {
 			}).catch(err => {
 				console.log(err.response);
 				that.goto('login');
+				that.$message({
+					message:'请先登录',
+					type:'info'
+				});
 				return false;
 			});
 		},
@@ -317,11 +471,11 @@ export default {
 		}
 	},
 	mounted: function() {
-		// this.login_required();
-		// this.init_info();
-		// this.init_chat_list();
-		// this.init_friend_list();
-		// this.init_socket();
+		this.login_required();
+		this.init_info();
+		this.init_chat_list();
+		this.init_friend_list();
+		this.init_socket();
 		this.changeListMode('chat');
 		console.log(this.socket);
 	},
