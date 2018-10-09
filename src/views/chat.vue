@@ -190,7 +190,19 @@ export default {
 		},
 		update_info(new_bio) {
 			console.log(new_bio);
-			// TODO: ajax
+			let that = this;
+			let info_api = that.$url_prefix + '/api/user/bio/update';
+			that.$ajax.post(
+				info_api,
+				that.$qs.stringify({
+					bio:new_bio
+				})
+			).then(res => {
+				console.log(res);
+				that.my_info.bio = new_bio;
+			}).catch(err => {
+				console.log(err.response);
+			});
 		},
 		chat_list_to_top(gid) {
 			let that = this;
