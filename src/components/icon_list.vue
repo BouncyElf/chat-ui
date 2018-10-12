@@ -3,6 +3,21 @@
 		<el-row class="icon">
 			<el-button
 				circle
+				@click="logout_dialog"
+				icon="el-icon-close"></el-button>
+			<el-dialog
+				title="退出登录"
+				:visible.sync="logout_visible">
+				<span>是否退出当前帐号?</span>
+				<span slot="footer" class="dialog-footer">
+					<el-button @click="cancel">取 消</el-button>
+					<el-button type="primary" @click="logout">确 定</el-button>
+				</span>
+			</el-dialog>
+		</el-row>
+		<el-row class="icon">
+			<el-button
+				circle
 				@click="new_group_dialog"
 				icon="el-icon-plus"></el-button>
 			<el-dialog
@@ -65,6 +80,7 @@ export default {
 	props:['friend_list'],
 	data() {
 		return {
+			logout_visible:false,
 			new_group_visible:false,
 			add_friend_visible: false,
 			update_info_visible: false,
@@ -75,6 +91,13 @@ export default {
 		}
 	},
 	methods: {
+		logout() {
+			this.$emit('logout');
+			this.hidden_dialog();
+		},
+		logout_dialog() {
+			this.logout_visible = true;
+		},
 		new_group() {
 			if (this.choosen.length === 0) {
 				this.cancel();
@@ -122,11 +145,13 @@ export default {
 			this.new_bio = '';
 		},
 		cancel() {
+			this.logout_visible = false;
 			this.new_group_visible = false;
 			this.add_friend_visible = false;
 			this.update_info_visible = false;
 		},
 		hidden_dialog() {
+			this.logout_visible = false;
 			this.new_group_visible = false;
 			this.add_friend_visible = false;
 			this.update_info_visible = false;
@@ -139,6 +164,9 @@ export default {
 .icon-wrapper {
 	width:100%;
 	height:-webkit-fill-available;
+	height:-moz-available;
+	height:-moz-fill-available;
+	height:fill-available;
 	border-right:1px solid #dcdfe6;
 }
 

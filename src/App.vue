@@ -24,6 +24,9 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 	min-width:100%;
 	min-height:-webkit-fill-available;
+	min-height:-moz-available;
+	min-height:-moz-fill-available;
+	min-height:fill-available;
 }
 
 #main-view {

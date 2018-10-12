@@ -35,6 +35,9 @@ export default {
 .msg-sender-wrapper {
 	width:100%;
 	height:-webkit-fill-available;
+	height:-moz-available;
+	height:-moz-fill-available;
+	height:fill-available;
 }
 
 .msg-sender-wrapper * {
@@ -43,10 +46,16 @@ export default {
 
 .input-area, .button-area {
 	height:-webkit-fill-available;
+	height:-moz-available;
+	height:-moz-fill-available;
+	height:fill-available;
 }
 
 .msg-input textarea {
 	height:-webkit-fill-available;
+	height:-moz-available;
+	height:-moz-fill-available;
+	height:fill-available;
 	resize:none;
 	border-radius:0;
 	border-right-width:.5px;
@@ -58,7 +67,13 @@ export default {
 
 .send-button {
 	width:-webkit-fill-available;
+	width:-moz-available;
+	width:-moz-fill-available;
+	width:fill-available;
 	height:-webkit-fill-available;
+	height:-moz-available;
+	height:-moz-fill-available;
+	height:fill-available;
 	border-radius:0;
 	border-left-width:.5px;
 }
