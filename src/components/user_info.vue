@@ -1,8 +1,7 @@
 <template>
 	<el-row class="user-info-wrapper">
 		<h1 class="name">{{ info.name }}</h1>
-		<h5 class="display_id">{{ 'display id: ' + info.display_id }}</h5>
-		<p class="bio">&nbsp;&nbsp;&nbsp;&nbsp;{{ info.bio }}</p>
+		<h5 class="display_id">{{ 'ID: ' + info.uid }}</h5>
 	</el-row>
 </template>
 

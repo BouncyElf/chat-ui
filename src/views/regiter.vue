@@ -75,7 +75,7 @@ export default {
 			let that = this;
 			that.$refs['register'].validate((valid) => {
 				if (valid) {
-					let register_api = that.$url_prefix + '/api/user/register';
+					let register_api = that.$url_prefix + '/api/user/new';
 					that.$ajax.post(
 						register_api,
 						that.$qs.stringify({
@@ -89,7 +89,7 @@ export default {
 					}).catch(err => {
 						console.log(err.response);
 						let code = err.response.status;
-						if (code === 409) {
+						if (code === 500) {
 							that.$message({
 								message:'用户名已被注册',
 								type:'error'
@@ -101,7 +101,6 @@ export default {
 							message:'发生了一些意料之外的错误',
 							type:'error'
 						});
-						return false;
 					});
 				} else {
 					that.$message({

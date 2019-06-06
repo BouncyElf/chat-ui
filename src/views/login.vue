@@ -70,7 +70,7 @@ export default {
 							return false;
 						} else if (code === 400) {
 							that.$message({
-								message:'密码错误',
+								message:'用户名不存在或密码错误',
 								type:'error'
 							});
 							that.username_err = '密码错误';
@@ -80,7 +80,6 @@ export default {
 							message:'发生了一些意料之外的错误',
 							type:'error'
 						});
-						return false;
 					});
 				} else {
 					that.$message({

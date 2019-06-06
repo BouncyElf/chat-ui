@@ -6,7 +6,6 @@ import router from './router';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
 import ChatList from './components/chat_list.vue';
-import FriendList from './components/friend_list.vue';
 import UserInfo from './components/user_info.vue';
 import IconList from './components/icon_list.vue';
 import GroupInfo from './components/group_info.vue';
@@ -18,7 +17,6 @@ Vue.config.productionTip = false;
 
 Vue.use(ElementUI, axios, VueAxios);
 Vue.component('chat-list', ChatList);
-Vue.component('friend-list', FriendList);
 Vue.component('user-info', UserInfo);
 Vue.component('icon-list', IconList);
 Vue.component('group-info', GroupInfo);
@@ -28,7 +26,7 @@ Vue.prototype.$ajax = axios;
 Vue.prototype.$qs = Qs;
 
 // var debugMode = 'debug';
-var debugMode = '';
+var debugMode = 'debug';
 
 Vue.prototype.$debugMode = debugMode;
 

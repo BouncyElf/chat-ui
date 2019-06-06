@@ -32,7 +32,7 @@ module.exports = {
 		hotOnly: false,
 		proxy: {
 			'/debug/*': {
-				target: 'http://localhost:1212',
+				target: 'http://localhost',
 				changeOrigin: true,
 				pathRewrite: {
 					'^/debug':''
