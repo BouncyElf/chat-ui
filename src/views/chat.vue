@@ -6,6 +6,10 @@
 					<icon-list
 						@logout="logout"
 						@new_chat="new_chat"
+						@new_group_chat="new_group_chat"
+						@get_all_users="get_all_users"
+						:all_users="all_users"
+						:my_uid="my_info.uid"
 						></icon-list>
 				</el-col>
 				<el-col :span="19">
@@ -14,7 +18,7 @@
 					</el-row>
 					<el-row class="list-view">
 						<el-row class="list-content">
-							<chat-list v-if="list_mode === 'chat'"
+							<chat-list
 								:chats="chat_list"
 								:text_limit="limit.text_limit"
 								@open_chat="open_chat"
@@ -27,14 +31,16 @@
 		<el-main class="chat-main-view">
 			<el-container class="chat-space">
 				<el-header class="group-info">
-					<group-info :name="focused_group.name"></group-info>
+					<group-info 
+		 				@change_chat_name='change_chat_name'
+						:group="focused_group"></group-info>
 				</el-header>
 				<el-main class="msg-list">
 					<msg-list :messages="msg_arr"
-						:myname="my_info.name"></msg-list>
+						:myid="my_info.uid"></msg-list>
 				</el-main>
 				<el-footer class="msg-sender">
-					<msg-sender @send="send_msg"></msg-sender>
+					<msg-sender @send="send_msg_btn"></msg-sender>
 				</el-footer>
 			</el-container>
 		</el-main>
@@ -46,12 +52,12 @@ export default {
 	data() {
 		return {
 			msg_arr:[],
+			all_users:[],
 			socket:null,
 			socket_url:'ws://localhost/socket',
 			limit:{
 				text_limit:10
 			},
-			list_mode:'chat',
 			my_info: {
 				uid:'',
 				name:'',
@@ -60,16 +66,10 @@ export default {
 				gid:'',
 				name:''
 			},
-			chat_list: [{
-					name:'',
-					gid:'',
-					msg_arr:[],
-					unread:false
-				}
-			],
+			chat_list: [],
 			msg_send_queue: [],
-			focused_sending_msg_uuid: '',
-			send_state: 'close',
+			send_state: '0',
+			send_once_lock: 'unlock'
 		}
 	},
 	methods: {
@@ -79,86 +79,151 @@ export default {
 		get_uuid() {
 			return (this.S4()+this.S4()+"-"+this.S4()+"-"+this.S4()+"-"+this.S4()+"-"+this.S4()+this.S4()+this.S4());
 		},
-		restore_msg_arr() {
-			if (this.chat_list.length >= 1) {
-				this.chat_list[0].msg_arr = this.msg_arr;
+		append_arr(origin_arr, values) {
+			try {
+				for (let i = 0; i < values.length; i++) {
+					origin_arr.push(values[i]);
+				}
+				return origin_arr;
+			} catch(err) {
+				console.log('append error', err);
+				return [];
 			}
 		},
-		get_user_info(uid) {
-			let user_api = this.$url_prefix + '/api/user/info';
-			this.$ajax.post(
-				user_api,
-				this.$qs.stringify({
-					uid:uid,
-				})
-			).then(res => {
-				console.log('get user info api', res);
-				return res.data.data;
-			}).catch(err => {
+		async get_all_users() {
+			let user_api = this.$url_prefix + '/api/user/all';
+			try {
+				let res = await this.$ajax.post(
+					user_api,
+					this.$qs.stringify({
+					})
+				);
+				console.log('get all users', res.data.data);
+				this.all_users = res.data.data;
+			} catch(err) {
+				console.log('get all user error', err);
 				return null;
-			});
+			}
+		},
+		change_chat_name(group, new_name) {
+			try{
+				let group_api = this.$url_prefix + '/api/group/new/name';
+				this.$ajax.post(
+					group_api,
+					this.$qs.stringify({
+						gid:group.gid,
+						name:new_name
+					})
+				);
+				this.change_chat_name_local(group.gid, new_name);
+				this.send_msg(this.new_action_msg(this.my_info.name+'更改群名为'+'"'+new_name+'"', {
+					action:'change_chat_name',
+					gid:group.gid,
+					name:new_name
+				}));
+			} catch(err) {
+				console.log('change chat name', err);
+			}
+		},
+		change_chat_name_local(gid, name) {
+			if (this.focused_group.gid === gid) {
+				this.focused_group.name = name;
+			}
+			for (let i = 0; i < this.chat_list.length; i++) {
+				if (this.chat_list[i].gid == gid) {
+					this.chat_list[i].name = name;
+					break;
+				}
+			}
+		},
+		new_group_chat(name, uid_arr) {
+			return this.new_group(name, uid_arr);
+		},
+		restore_msg_arr() {
+			if (this.msg_arr.length !== 0 && this.chat_list.length >= 1) {
+				this.chat_list[0].msg_arr = this.append_arr([], this.msg_arr);
+			}
+		},
+		async get_user_info(uid) {
+			let user_api = this.$url_prefix + '/api/user/info';
+			try {
+				let res = await this.$ajax.post(
+					user_api,
+					this.$qs.stringify({
+						uid:uid
+					})
+				);
+				return res.data.data;
+			} catch(err) {
+				return null;
+			}
 			return null;
 		},
-		new_chat(uid) {
-			let friend = this.get_user_info(uid);
+		async new_chat(uid) {
+			let friend = await this.get_user_info(uid);
+			console.log(friend);
 			if (friend === null) {
-				that.$message({
+				this.$message({
 					message:'找不到指定的用户(UID: '+uid+')',
 					type:'error'
 				});
 				return false;
 			}
-			this.new_group(friend.name, friend.uid);
+			await this.new_group(friend.name+' & '+this.my_info.name, [friend.uid]);
 		},
 		get_chat_list() {
-			this.restore_msg_arr();
-			let list_api = this.$url_prefix + '/api/list/get';
-			let gids = '';
-			this.chat_list = [];
-			this.$ajax.post(
-				list_api,
-				this.$qs.stringify({
-				})
-			).then(res => {
-				console.log('get chat list api', res);
-				if (res.data.data === '') {
-					res.data.data = [];
-				}
-				this.chat_list = res.data.data;
-				this.update_focused_group();
-			}).catch(err => {
-				console.log('get chat list api err resp', err.response);
-				// TODO: handle err
-				return false;
-			});
+			try {
+				this.restore_msg_arr();
+				let list_api = this.$url_prefix + '/api/list/get';
+				this.chat_list = [];
+				this.$ajax.post(
+					list_api,
+					this.$qs.stringify({
+					})
+				).then(res => {
+					console.log('get chat list api', res);
+					if (res.data.data === '') {
+						res.data.data = [];
+					}
+					this.chat_list = res.data.data;
+					this.update_focused_group();
+				}).catch(err => {
+					console.log('get chat list api err resp', err);
+				});
+			} catch(err) {
+				console.log('get_chat_list error', err);
+			}
 		},
 		update_focused_group() {
 			if (this.chat_list.length >= 1) {
 				this.focused_group.gid = this.chat_list[0].gid;
 				this.focused_group.name = this.chat_list[0].name;
+				this.msg_arr = this.append_arr([], this.chat_list[0].msg_arr);
 			}
 		},
-		sync_chat_list() {
-			let list_api = this.$url_prefix + '/api/list/update';
-			let gids = '';
-			for (let i = 0; i < this.chat_list.length; i++) {
-				gids += this.chat_list.gid;
-				if (i !== this.chat_list.length - 1) {
-					gids += ';';
+		async sync_chat_list() {
+			try {
+				let list_api = this.$url_prefix + '/api/list/update';
+				let gids = '';
+				for (let i = 0; i < this.chat_list.length; i++) {
+					gids += this.chat_list[i].gid;
+					if (i !== this.chat_list.length - 1) {
+						gids += ';';
+					}
 				}
+				this.$ajax.post(
+					list_api,
+					this.$qs.stringify({
+						gids:gids
+					})
+				).then(res => {
+					console.log('update chat list api', res);
+				}).catch(err => {
+					console.log('update chat list api err', err);
+				});
+			} catch(err) {
+				console.log('sync_chat_list error', err);
 			}
-			this.$ajax.post(
-				list_api,
-				this.$qs.stringify({
-					gids:gids
-				})
-			).then(res => {
-				console.log('update chat list api', res);
-			}).catch(err => {
-				console.log('update chat list api err resp', err.response);
-				// TODO: handle err
-				return false;
-			});
 		},
 		logout() {
 			let logout_api = this.$url_prefix + '/api/user/logout';
@@ -190,7 +255,7 @@ export default {
 				console.log('update unread api err resp', err.response);
 			});
 		},
-		new_group(name, tuids) {
+		async new_group(name, tuids) {
 			if (tuids.indexOf(this.my_info.uid) === -1) {
 				tuids.push(this.my_info.uid);
 			}
@@ -212,7 +277,7 @@ export default {
 			).then(res => {
 				console.log('new group api', res);
 				this.chat_list.push({
-					name:name,
+					name:res.data.data.name,
 					gid: res.data.data.gid,
 					msg_arr:[],
 					unread:false
@@ -220,73 +285,164 @@ export default {
 				this.chat_list_to_top(res.data.data.gid);
 				this.sync_chat_list();
 			}).catch(err => {
-				console.log('new group api err resp', err.response);
+				console.log('new group api err resp', err);
 			});
 		},
 		chat_list_to_top(gid) {
-			this.restore_msg_arr();
+			if (this.focused_group.gid === gid) {
+				return;
+			}
 			for (let i = 0; i < this.chat_list.length; i++) {
-				if (this.char_list[i].gid === gid) {
+				if (this.chat_list[i].gid === gid) {
+					// 存储当前消息再更新消息
+					this.restore_msg_arr();
+					this.msg_arr = this.append_arr([], this.chat_list[i].msg_arr);
+
+					// 将当前的聊天组放到第一个
+					let temp = this.chat_list[i];
 					this.chat_list.splice(i, 1);
-					this.chat_list.unshift(this.chat_list[i]);
-					this.msg_arr = this.chat_list[i].msg_arr;
+					this.chat_list.unshift(temp);
+
+					// 更新焦点聊天组
 					this.update_focused_group();
 					return true;
 				}
 			}
 			return false;
 		},
-		handle_msg(msg) {
-			msg = JSON.parse(msg);
-			if (msg['type'] === 'ack') {
-				if (msg['sender_mid'] === this.focused_sending_msg_uuid) {
-					this.send_state = 'done';
+		async get_group_info(gid) {
+			let group_api = this.$url_prefix + '/api/group/info';
+			try {
+				let res = await this.$ajax.post(
+					group_api,
+					this.$qs.stringify({
+						gid:gid
+					})
+				);
+				return res.data.data;
+			} catch(err) {
+				return null;
+			}
+			return null;
+		},
+		async handle_msg(msg) {
+			console.log(msg, new Date().getTime());
+			if (msg['type'] === 1) {
+				this.send_once();
+			} else if (msg['type'] === 3 && msg.from !== this.my_info.uid) {
+				let extra = JSON.parse(msg.extra);
+				if (extra.params.action === 'change_chat_name') {
+					this.change_chat_name_local(extra.params.gid, extra.params.name);
+					this.push_msg(msg);
 				}
 			} else {
-				if (msg.to === this.focused_group.gid) {
-					this.msg_arr.push(msg);
-					this.chat_list_to_top(msg.to);
-					this.update_unread(msg.to, msg.mid);
-				} else {
-					for (let i = 0; i < this.chat_list.length; i++) {
-						if (msg.to === this.chat_list[i].gid) {
-							this.chat_list[i].msg_arr.push(msg);
-							break;
-						}
+				this.push_msg(msg);
+			}
+		},
+		async push_msg(msg) {
+			if (msg.to === this.focused_group.gid) {
+				this.msg_arr.push(msg);
+				this.update_unread(msg.to, msg.mid);
+			} else {
+				let handled = false;
+				for (let i = 0; i < this.chat_list.length; i++) {
+					if (msg.to === this.chat_list[i].gid) {
+						handled = true;
+						this.chat_list[i].msg_arr.push(msg);
+						this.chat_list[i].unread = true;
+						break;
 					}
 				}
+				if (!handled) {
+					let group = await this.get_group_info(msg.to);
+					if (group === null) {
+						this.$message({
+							message:'收到了一条无法解析的消息',
+							type:'error'
+						});
+					}
+					this.chat_list.push({
+						name:group.name,
+						gid:group.gid,
+						msg_arr:[msg],
+						unread:true
+					});
+					this.sync_chat_list();
+				}
 			}
+			this.socket.send(this.new_ack_msg(msg.mid));
+		},
+		new_ack_msg(mid) {
+			return JSON.stringify({
+				mid:mid,
+				content:mid,
+				type:2,
+				from:this.my_info.uid
+			});
+		},
+		new_action_msg(action, params) {
+			return {
+				sender_mid:this.get_uuid(),
+				content:action,
+				type:3,
+				from:this.my_info.uid,
+				to:this.focused_group.gid,
+				extra:JSON.stringify({
+					params:params,
+					from_name:this.my_info.name,
+					time:Date.parse(new Date())
+				})
+			};
+		},
+		new_msg(content) {
+			return {
+				sender_mid:this.get_uuid(),
+				content:content,
+				type:0,
+				from:this.my_info.uid,
+				to:this.focused_group.gid,
+				extra:JSON.stringify({
+					from_name:this.my_info.name,
+					time:Date.parse(new Date())
+				})
+			};
+		},
+		send_msg_btn(content) {
+			let msg = this.new_msg(content);
+			console.log('new_msg', msg);
+			this.send_msg(msg);
 		},
 		send_msg(msg) {
-			// 这里用send state以防止多次触发send_msg方法时重复发送消息的错误
-			msg.sender_mid = this.get_uuid();
+			console.log('sending msg', msg);
 			this.msg_send_queue.push(msg);
-			if (this.send_state === 'close') {
-				this.send_state = 'sending';
-				for (let i = 0; i < this.msg_send_queue.length; i++) {
-					let now_msg = this.msg_send_queue[i];
-					this.socket.send(now_msg);
-					this.focused_sending_msg_uuid = now_msg.sender_mid;
-					this.send_state = 'wait_ack';
-					let now = new Date().getTime();
-					while (this.send_state !== 'done') {
-						if (new Date().getTime() - now > 3 * 1000 ) {
-							// TODO: 超时处理
-						}
-					}
-				}
-				this.msg_send_queue = [];
-				this.send_state = 'close';
+			if (this.send_state === '0') {
+				this.send_once();
 			}
 		},
+		send_once() {
+			if (this.send_once_lock === 'unlock') {
+				this.send_once_lock = 'lock';
+				this.send_state = '1';
+				if (this.msg_send_queue.length >= 1) {
+					let now_msg = this.msg_send_queue.shift();
+					this.socket.send(JSON.stringify(now_msg));
+				} else {
+					this.send_state = '0';
+				}
+			}
+			this.send_once_lock = 'unlock';
+		},
 		open_chat(group) {
+			if (group.gid === this.focused_group.gid) {
+				return;
+			}
 			for (let i = 0; i < this.chat_list.length; i++) {
 				if (this.chat_list[i].gid === group.gid) {
-					this.msg_arr = this.chat_list[i].msg_arr;
+					this.chat_list[i].unread = false;
+					this.chat_list_to_top(group.gid);
 					if (this.msg_arr.length !== 0) {
 						this.update_unread(group.gid, this.msg_arr[this.msg_arr.length-1].mid);
 					}
-					this.chat_list_to_top(group.gid);
 					break;
 				}
 			}
@@ -302,9 +458,9 @@ export default {
 
 				that.socket.onmessage = function(evt) {
 					console.log("Received Message:", evt);
-					that.handle_msg(evt.data);
 					let msg = JSON.parse(evt.data);
-					if (msg.from !== that.my_info.uid) {
+					that.handle_msg(msg);
+					if (msg.type === 0 && msg.from !== that.my_info.uid) {
 						that.$notify({
 							title:'通知',
 							message:'您收到一条新消息'
@@ -364,17 +520,8 @@ export default {
 		this.login_required();
 		this.init_chat_list();
 		this.init_socket();
+		this.get_all_users();
 		console.log('socket', this.socket);
-	},
-	watch: {
-		list_mode: function() {
-			this.$refs.btn_chat_list.$el.style.backgroundColor = '';
-			this.$refs.btn_chat_list.$el.style.color = '';
-			if (this.list_mode === 'chat') {
-				this.$refs.btn_chat_list.$el.style.backgroundColor = '#409EFF';
-				this.$refs.btn_chat_list.$el.style.color = '#ffffff';
-			}
-		}
 	}
 };
 </script>
@@ -412,10 +559,6 @@ export default {
 	height:-moz-available;
 	height:-moz-fill-available;
 	height:fill-available;
-}
-
-.my-info {
-	height:20%;
 }
 
 .list-view {

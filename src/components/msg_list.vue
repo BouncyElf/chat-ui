@@ -1,16 +1,14 @@
 <template>
 	<el-row class="msg-list-wrapper">
 		<el-row class="flex" v-for="msg in messages">
-			<el-row class="left" v-if="msg.from_name !== myname">
-				<a v-if="msg.type === 'system/friend'"
-					@click="add_friend_request(msg.from)"
-					v-popover:popover
-					class="cursor-pointer"
-					>({{ msg.time }}):&nbsp;<span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span></a>
-				<p v-else v-popover:popover>{{ msg.from_name }}&nbsp;({{ msg.time }}):&nbsp;<span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span></p>
+			<el-row class="right" v-if="msg.type === 0 && msg.from === myid">
+				<p v-popover:popover><span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span>&nbsp;:({{ JSON.parse(msg.extra).time }})&nbsp;{{ JSON.parse(msg.extra).from_name }}</p>
 			</el-row>
-			<el-row class="right" v-else>
-				<p v-popover:popover><span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span>&nbsp;:({{ msg.time }})&nbsp;{{ msg.from_name }}</p>
+			<el-row class="left" v-else-if="msg.type === 0">
+				<p v-popover:popover>{{ JSON.parse(msg.extra).from_name }}&nbsp;({{ JSON.parse(msg.extra).time }}):&nbsp;<span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span></p>
+			</el-row>
+			<el-row class="mid" v-else-if="msg.type === 3">
+				<p v-popover:popover><span class="msg-content">&nbsp;{{ msg.content }}&nbsp;</span></p>
 			</el-row>
 		</el-row>
 	</el-row>
@@ -18,7 +16,7 @@
 
 <script>
 export default {
-	props:['messages', 'myname'],
+	props:['messages', 'myid'],
 	methods: {
 		add_friend_request(tuid) {
 			this.$emit('add_friend_request', tuid);
@@ -49,6 +47,9 @@ export default {
 }
 .right {
 	align-self:flex-end;
+}
+.mid {
+	align-self:center;
 }
 .cursor-pointer {
 	cursor:pointer;

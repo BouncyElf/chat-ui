@@ -3,9 +3,8 @@
 		<el-button v-for="c in chats" class="chat" @click="open_chat(c)">
 			<el-card class="chat-card" shadow="hover">
 				<el-row class="chat-title">
-					<el-col :span="15" class="chat-name">{{ c.name }}</el-col>
+					<el-col class="chat-name">{{ c.name }}</el-col>
 					<el-badge v-if="c.unread" is-dot>
-						<el-col :span="9" class="chat-time">&nbsp;</el-col>
 					</el-badge>
 				</el-row>
 			</el-card>
